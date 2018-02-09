@@ -1,0 +1,90 @@
+public void addProdEstocLloc(Producto p, Lugar l, Stock s) {
+        
+        Conexion conecControl = new Conexion();
+        Connection cn = conecControl.conectar();
+
+        String sql = "INSERT INTO tbl_producte (prod_nom, prod_serie, categoria_id) VALUES (?,?,?)";
+        String sql_lloc = "INSERT INTO tbl_lloc (num_bloc, num_passadis, num_lleixa) VALUES (?,?,?)";
+        
+//LR = last record       
+        String sqlLRproducto = "SELECT DISTINCT last_insert_id() FROM tbl_producte";
+        String sqlLRlloc = "SELECT DISTINCT last_insert_id() FROM tbl_lloc";
+        
+        String sqlEstoc = "INSERT INTO tbl_estoc (estoc_q_actual, estoc_q_min, estoc_q_max, prod_id, lloc_id) VALUES (?,?,?,?,?)";
+        
+        PreparedStatement pst1 = null;
+        PreparedStatement pst2 = null;
+        PreparedStatement pst3 = null;
+        
+        Statement st1 = null;
+        Statement st2 = null;
+        
+        ResultSet rs = null;
+        
+        try {
+            cn.setAutoCommit(false);
+
+//insertar registros a la tbl_producte
+
+            pst1 = cn.prepareStatement(sql);
+
+            pst1.setString(1, p.getProd_nom());
+            pst1.setString(2, p.getProd_serie());
+            pst1.setInt(3, p.getCategoria_id());
+            
+            pst1.executeUpdate();
+            //JOptionPane.showMessageDialog(null, "Producto");
+            
+//insertar registros a la tbl_lloc
+            
+            pst2 = cn.prepareStatement(sql_lloc);
+            
+            pst2.setString(1, l.getNum_bloc());
+            pst2.setString(2, l.getNum_passadis());
+            pst2.setString(3, l.getNum_lleixa());
+            
+            pst2.executeUpdate();
+            //JOptionPane.showMessageDialog(null, "Lugar");
+            
+//obtener ultimos registros de la tbl_producte
+
+            st1 = cn.createStatement();
+            rs = st1.executeQuery(sqlLRproducto);
+            int idst1=0;
+            while(rs.next()){
+            idst1=rs.getInt(1);
+            }
+            
+//obtener ultimos registros de la tbl_lloc
+
+            st2 = cn.createStatement();
+            rs = st2.executeQuery(sqlLRlloc);
+            int idst2=0;
+            if(rs.next()){
+            idst2=rs.getInt(1);
+            }
+
+//insertar registros a la tbl_estoc
+
+            pst3 = cn.prepareStatement(sqlEstoc);
+            
+            pst3.setInt(1, s.getEstoc_q_actual());
+            pst3.setInt(2, s.getEstoc_q_min());
+            pst3.setInt(3, s.getEstoc_q_max());
+            pst3.setInt(5, idst1);
+            pst3.setInt(4, idst2);
+              
+            pst3.executeUpdate();
+            JOptionPane.showMessageDialog(null, "Registro añadido correctamente.");
+
+            
+            cn.commit();
+        } catch (SQLException | HeadlessException e) {
+            JOptionPane.showMessageDialog(null, "Conexion erronea");
+            try {
+                cn.rollback();
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(null, "No se puede deshacer");
+            }          
+        }
+    }
